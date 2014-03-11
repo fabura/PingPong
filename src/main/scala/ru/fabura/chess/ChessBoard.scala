@@ -1,7 +1,7 @@
 package ru.fabura.chess
 
 /** Created by bulat.fattahov 2013 */
-case class ChessBoard(col: Int, row: Int, figures: Map[Cell, Figure]) {
+case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
   /**
    * The Set of Cells, which are unreachable by figures
    */
@@ -12,7 +12,7 @@ case class ChessBoard(col: Int, row: Int, figures: Map[Cell, Figure]) {
   /**
    * Will this `figure` threaten other figures from the `cell`?
    */
-  private def isAbleToPlace(figure: Figure)(cell: Cell): Boolean = !figures.keys.exists(figure.canReach(cell))
+  private def isAbleToPlace(figure: Figure)(cell: Cell): Boolean = !figures.exists(a=> figure.canReach(cell)(a._1))
 
   /**
    * Returns the Set of possible ChessBoards.
@@ -20,18 +20,22 @@ case class ChessBoard(col: Int, row: Int, figures: Map[Cell, Figure]) {
   def placeFigure(figure: Figure): Set[ChessBoard] =
     freeCells
       .filter(isAbleToPlace(figure))
-      .map(cell => ChessBoard(col, row, figures + (cell -> figure))
+      .map(cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure))
       ).toSet
 }
 
 object ChessBoard {
-  def empty(col: Int, row: Int) = ChessBoard(col, row, figures = Map.empty)
+  def empty(col: Int, row: Int) = ChessBoard(col, row, figures = Set.empty)
 
   import scala.collection.mutable.{Map => MMap}
 
+  private val cellFigureMap: MMap[(Cell, Figure), (Cell, Figure)] = MMap.empty
+
+  def getTuple(cell: Cell, figure: Figure) = cellFigureMap.getOrElseUpdate(cell -> figure, cell -> figure)
+
   private val allBoards: MMap[(Int, Int), Seq[Cell]] = MMap.empty
 
-  def getAllBoard(col: Int, row: Int): Seq[Cell] = allBoards.getOrElse(col -> row,
+  def getAllBoard(col: Int, row: Int): Seq[Cell] = allBoards.getOrElseUpdate(col -> row,
     for (x <- 1 to col; y <- 1 to row) yield Cell(x, y))
 }
 
