@@ -10,11 +10,14 @@ object ChessBoardMain extends App {
   }
 
   val rows = args(0).toInt
+//  val rows = 3
   val cols = args(1).toInt
+//  val cols = 3
 
   val figures: Seq[Figure] = getFiguresFromArgs
 
-  //  val figures = (King :: King :: Queen :: Bishop :: Rook :: Knight :: Nil) sortBy Figure.weight
+//    val figures = (King :: King :: Queen :: Bishop :: Rook :: Knight :: Nil) sortBy Figure.weight
+//    val figures = (Queen :: Knight:: Nil) sortBy Figure.weight
 
   val board = ChessBoard.empty(rows, cols)
 

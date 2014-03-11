@@ -1,22 +1,18 @@
 package ru.fabura.chess
 
 /** Created by bulat.fattahov 2013 */
-case class ChessBoard(col: Int, row: Int, figures: Set[(Figure, Cell)]) {
+case class ChessBoard(col: Int, row: Int, figures: Map[Cell, Figure]) {
   /**
    * The Set of Cells, which are unreachable by figures
    */
-  def freeCells = {
-    val allBoard: IndexedSeq[Cell] = for (x <- 1 to col; y <- 1 to row) yield Cell(x, y)
-
-    figures.foldLeft(allBoard) {
-      case (cells, (figure, cell)) => cells.filterNot(figure.canReach(cell))
-    }
+  def freeCells = figures.foldLeft(ChessBoard.getAllBoard(col, row)) {
+    case (cells, (cell, figure)) => cells.filterNot(figure.canReach(cell))
   }
 
   /**
    * Will this `figure` threaten other figures from the `cell`?
    */
-  private def isAbleToPlace(figure: Figure)(cell: Cell): Boolean = !figures.exists(a => figure.canReach(a._2)(cell))
+  private def isAbleToPlace(figure: Figure)(cell: Cell): Boolean = !figures.keys.exists(figure.canReach(cell))
 
   /**
    * Returns the Set of possible ChessBoards.
@@ -24,12 +20,19 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Figure, Cell)]) {
   def placeFigure(figure: Figure): Set[ChessBoard] =
     freeCells
       .filter(isAbleToPlace(figure))
-      .map(cell => ChessBoard(col, row, figures + (figure -> cell))
+      .map(cell => ChessBoard(col, row, figures + (cell -> figure))
       ).toSet
 }
 
 object ChessBoard {
-  def empty(col: Int, row: Int) = ChessBoard(col, row, figures = Set.empty)
+  def empty(col: Int, row: Int) = ChessBoard(col, row, figures = Map.empty)
+
+  import scala.collection.mutable.{Map => MMap}
+
+  private val allBoards: MMap[(Int, Int), Seq[Cell]] = MMap.empty
+
+  def getAllBoard(col: Int, row: Int): Seq[Cell] = allBoards.getOrElse(col -> row,
+    for (x <- 1 to col; y <- 1 to row) yield Cell(x, y))
 }
 
 case class Cell(x: Int, y: Int)
