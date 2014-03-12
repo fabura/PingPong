@@ -5,7 +5,7 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
   /**
    * The Set of Cells, which are unreachable by figures
    */
-  def freeCells = figures.foldLeft(ChessBoard.getAllBoard(col, row)) {
+  def freeCells = figures.foldLeft(ChessBoard.entireBoard(col, row)) {
     case (cells, (cell, figure)) => cells.filterNot(figure.canReach(cell))
   }
 
@@ -19,7 +19,7 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
     if (l.isEmpty) {
       None
     } else {
-      Option(l.map(_._1).max)
+      Option(l.maxBy(_._1)._1)
     }
   }
 
@@ -46,7 +46,7 @@ object ChessBoard {
 
   private val allBoards: MMap[(Int, Int), Seq[Cell]] = MMap.empty
 
-  def getAllBoard(col: Int, row: Int): Seq[Cell] = allBoards.getOrElseUpdate(col -> row,
+  def entireBoard(col: Int, row: Int): Seq[Cell] = allBoards.getOrElseUpdate(col -> row,
     for (x <- 1 to col; y <- 1 to row) yield Cell(x, y))
 }
 
