@@ -12,7 +12,7 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
   /**
    * Will this `figure` threaten other figures from the `cell`?
    */
-  private def isAbleToPlace(figure: Figure)(cell: Cell): Boolean = !figures.exists(a=> figure.canReach(cell)(a._1))
+  private def isAbleToPlace(figure: Figure)(cell: Cell): Boolean = !figures.exists(a => figure.canReach(cell)(a._1))
 
   /**
    * Returns the Set of possible ChessBoards.
@@ -23,24 +23,21 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
       .map(cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure))
       ).toSet
 
-  private def getLastCellWithTheSameFigure(figure:Figure) = {
+  private def getLastCellWithTheSameFigure(figure: Figure): Cell = {
     val l = figures.filter(_._2 == figure)
-    if(l.isEmpty){
+    if (l.isEmpty) {
       None
-    } else{
-      Option(l.maxBy{
-        case (cell, _) => cell.x * row + cell.y
-      }._1)
+    } else {
+      Option(l.map(_._1).max)
     }
   }
 
-  def placeFigureAtTheEnd[T<:Figure](figure: T): Seq[ChessBoard] = {
-    val lastCellWithTheSameFigure = getLastCellWithTheSameFigure(figure).getOrElse(Cell(0,0))
-    freeCells.filter(cell =>
-      cell.x > lastCellWithTheSameFigure.x || (cell.x == lastCellWithTheSameFigure.x && cell.y > lastCellWithTheSameFigure.y)
-    ).filter(isAbleToPlace(figure)).map(
-    cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure))
-    )
+  def placeFigureAtTheEnd[T <: Figure](figure: T): Seq[ChessBoard] = {
+    val lastCellWithTheSameFigure = getLastCellWithTheSameFigure(figure).getOrElse(Cell(0, 0))
+    freeCells
+      .filter(_ > lastCellWithTheSameFigure)
+      .filter(isAbleToPlace(figure))
+      .map(cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure)))
   }
 }
 
@@ -59,7 +56,13 @@ object ChessBoard {
     for (x <- 1 to col; y <- 1 to row) yield Cell(x, y))
 }
 
-case class Cell(x: Int, y: Int)
+case class Cell(x: Int, y: Int) extends Ordered[Cell] {
+  def compare(that: Cell): Int = that match {
+    case Cell(tx, ty) if (tx > this.x || (tx == this.x && ty > this.y)) => -1
+    case Cell(tx, ty) if (tx == this.x && ty == this.y) => 0
+    case _ => 1
+  }
+}
 
 sealed abstract class Figure {
   def canReach(cell1: Cell)(cell2: Cell): Boolean = cell1 == cell2
