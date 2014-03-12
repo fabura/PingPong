@@ -23,7 +23,7 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
       .map(cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure))
       ).toSet
 
-  private def getLastCellWithTheSameFigure(figure: Figure): Cell = {
+  private def getLastCellWithTheSameFigure(figure: Figure): Option[Cell] = {
     val l = figures.filter(_._2 == figure)
     if (l.isEmpty) {
       None
