@@ -1,37 +1,28 @@
 package ru.fabura.chess
 
-import java.util.concurrent.atomic.AtomicInteger
-
 /** Created by bulat.fattahov 2013 */
 object ChessBoardMain extends App {
   if (args.isEmpty) {
-    println("Usage: ChessBoardMain 6 9 K[ing] 2 Q[ueen] 1 B[ishop] 1 Kn[ight] 1 R[ook] 1")
+    println("Usage: ChessBoardMain 6 9 K[ing] 2 Q[ueen] 1 B[ishop] 1 [k]N[ight] 1 R[ook] 1")
     sys.exit()
   }
 
   val rows = args(0).toInt
-//  val rows = 3
   val cols = args(1).toInt
-//  val cols = 3
 
   val figures: Seq[Figure] = getFiguresFromArgs
 
-//    val figures = (King :: King :: Queen :: Bishop :: Rook :: Knight :: Nil) sortBy Figure.weight
-//    val figures = (Queen :: Knight:: Nil) sortBy Figure.weight
-
   val board = ChessBoard.empty(rows, cols)
 
-  println(placementsOf(figures, board).size)
+  println(countOfPlacements(figures, board))
 
 
-  def placementsOf(figures: Seq[Figure], onBoard: ChessBoard): Set[ChessBoard] = {
+  def countOfPlacements(figures: Seq[Figure], onBoard: ChessBoard): Int = {
     figures match {
-      case Nil => Set(onBoard)
+      case Nil => 1
       case last :: Nil =>
-        onBoard.placeFigure(last)
-      case head :: tail => onBoard.placeFigure(head).foldLeft(Set.empty[ChessBoard]) {
-        case (set, b) => set ++ placementsOf(tail, b)
-      }
+        onBoard.placeFigureAtTheEnd(last).size
+      case head :: tail => onBoard.placeFigureAtTheEnd(head).par.map(countOfPlacements(tail, _)).fold(0)(_ + _)
     }
   }
 

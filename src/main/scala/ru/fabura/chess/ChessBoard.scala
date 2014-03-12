@@ -22,6 +22,26 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
       .filter(isAbleToPlace(figure))
       .map(cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure))
       ).toSet
+
+  private def getLastCellWithTheSameFigure(figure:Figure) = {
+    val l = figures.filter(_._2 == figure)
+    if(l.isEmpty){
+      None
+    } else{
+      Option(l.maxBy{
+        case (cell, _) => cell.x * row + cell.y
+      }._1)
+    }
+  }
+
+  def placeFigureAtTheEnd[T<:Figure](figure: T): Seq[ChessBoard] = {
+    val lastCellWithTheSameFigure = getLastCellWithTheSameFigure(figure).getOrElse(Cell(0,0))
+    freeCells.filter(cell =>
+      cell.x > lastCellWithTheSameFigure.x || (cell.x == lastCellWithTheSameFigure.x && cell.y > lastCellWithTheSameFigure.y)
+    ).filter(isAbleToPlace(figure)).map(
+    cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure))
+    )
+  }
 }
 
 object ChessBoard {
@@ -59,7 +79,7 @@ object Figure {
     case "K" => King
     case "Q" => Queen
     case "B" => Bishop
-    case "Kn" => Knight
+    case "N" => Knight
     case "R" => Rook
   }
 }
