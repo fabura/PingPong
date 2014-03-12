@@ -14,15 +14,6 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
    */
   private def isAbleToPlace(figure: Figure)(cell: Cell): Boolean = !figures.exists(a => figure.canReach(cell)(a._1))
 
-  /**
-   * Returns the Set of possible ChessBoards.
-   */
-  def placeFigure(figure: Figure): Set[ChessBoard] =
-    freeCells
-      .filter(isAbleToPlace(figure))
-      .map(cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure))
-      ).toSet
-
   private def getLastCellWithTheSameFigure(figure: Figure): Option[Cell] = {
     val l = figures.filter(_._2 == figure)
     if (l.isEmpty) {
@@ -32,7 +23,10 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
     }
   }
 
-  def placeFigureAtTheEnd[T <: Figure](figure: T): Seq[ChessBoard] = {
+  /**
+   * Places figure after all same figures and returns the Seq of possible ChessBoard.
+   */
+  def placeFigureAtTheEnd(figure: Figure): Seq[ChessBoard] = {
     val lastCellWithTheSameFigure = getLastCellWithTheSameFigure(figure).getOrElse(Cell(0, 0))
     freeCells
       .filter(_ > lastCellWithTheSameFigure)
@@ -58,14 +52,14 @@ object ChessBoard {
 
 case class Cell(x: Int, y: Int) extends Ordered[Cell] {
   def compare(that: Cell): Int = that match {
-    case Cell(tx, ty) if (tx > this.x || (tx == this.x && ty > this.y)) => -1
-    case Cell(tx, ty) if (tx == this.x && ty == this.y) => 0
+    case Cell(tx, ty) if tx > this.x || (tx == this.x && ty > this.y) => -1
+    case Cell(tx, ty) if tx == this.x && ty == this.y => 0
     case _ => 1
   }
 }
 
 sealed abstract class Figure {
-  def canReach(cell1: Cell)(cell2: Cell): Boolean = cell1 == cell2
+  def canReach(from: Cell)(to: Cell): Boolean = from == to
 }
 
 object Figure {
@@ -88,25 +82,25 @@ object Figure {
 }
 
 case object Queen extends Figure {
-  override def canReach(cell1: Cell)(cell2: Cell) = super.canReach(cell1)(cell2) || cell1.x == cell2.x || cell1.y == cell2.y || math.abs(cell1.x - cell2.x) == math.abs(cell1.y - cell2.y)
+  override def canReach(from: Cell)(to: Cell) = super.canReach(from)(to) || from.x == to.x || from.y == to.y || math.abs(from.x - to.x) == math.abs(from.y - to.y)
 }
 
 case object Rook extends Figure {
-  override def canReach(cell1: Cell)(cell2: Cell) = super.canReach(cell1)(cell2) || cell1.x == cell2.x || cell1.y == cell2.y
+  override def canReach(from: Cell)(to: Cell) = super.canReach(from)(to) || from.x == to.x || from.y == to.y
 }
 
 case object Knight extends Figure {
-  override def canReach(cell1: Cell)(cell2: Cell) = {
-    val deltaX = math.abs(cell1.x - cell2.x)
-    val deltaY = math.abs(cell1.y - cell2.y)
-    super.canReach(cell1)(cell2) || (deltaX == 2 && deltaY == 1) || (deltaX == 1 && deltaY == 2)
+  override def canReach(from: Cell)(to: Cell) = {
+    val deltaX = math.abs(from.x - to.x)
+    val deltaY = math.abs(from.y - to.y)
+    super.canReach(from)(to) || (deltaX == 2 && deltaY == 1) || (deltaX == 1 && deltaY == 2)
   }
 }
 
 case object Bishop extends Figure {
-  override def canReach(cell1: Cell)(cell2: Cell) = super.canReach(cell1)(cell2) || math.abs(cell1.x - cell2.x) == math.abs(cell1.y - cell2.y)
+  override def canReach(from: Cell)(to: Cell) = super.canReach(from)(to) || math.abs(from.x - to.x) == math.abs(from.y - to.y)
 }
 
 case object King extends Figure {
-  override def canReach(cell1: Cell)(cell2: Cell) = super.canReach(cell1)(cell2) || math.abs(cell1.x - cell2.x) <= 1 && math.abs(cell1.y - cell2.y) <= 1
+  override def canReach(from: Cell)(to: Cell) = super.canReach(from)(to) || math.abs(from.x - to.x) <= 1 && math.abs(from.y - to.y) <= 1
 }

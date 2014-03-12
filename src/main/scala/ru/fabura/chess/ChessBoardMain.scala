@@ -20,8 +20,7 @@ object ChessBoardMain extends App {
   def countOfPlacements(figures: Seq[Figure], onBoard: ChessBoard): Int = {
     figures match {
       case Nil => 1
-      case last :: Nil =>
-        onBoard.placeFigureAtTheEnd(last).size
+      case last :: Nil => onBoard.placeFigureAtTheEnd(last).size
       case head :: tail => onBoard.placeFigureAtTheEnd(head).par.map(countOfPlacements(tail, _)).fold(0)(_ + _)
     }
   }
