@@ -5,16 +5,16 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
   /**
    * The Set of Cells, which are unreachable by figures
    */
-  def freeCells = figures.foldLeft(ChessBoard.entireBoard(col, row)) {
+  lazy val freeCells = figures.foldLeft(ChessBoard.entireBoard(col, row)) {
     case (cells, (cell, figure)) => cells.filterNot(figure.canReach(cell))
-  }
+  }.view
 
   /**
    * Will this `figure` threaten other figures from the `cell`?
    */
   private def isAbleToPlace(figure: Figure)(cell: Cell): Boolean = !figures.exists(a => figure.canReach(cell)(a._1))
 
-  private def getLastCellWithTheSameFigure(figure: Figure): Option[Cell] = {
+  protected def getLastCellWithTheSameFigure(figure: Figure): Option[Cell] = {
     val l = figures.filter(_._2 == figure)
     if (l.isEmpty) {
       None
@@ -28,10 +28,22 @@ case class ChessBoard(col: Int, row: Int, figures: Set[(Cell, Figure)]) {
    */
   def placeFigureAtTheEnd(figure: Figure): Seq[ChessBoard] = {
     val lastCellWithTheSameFigure = getLastCellWithTheSameFigure(figure).getOrElse(Cell(0, 0))
-    freeCells
+    val freeCellsLocal = this.freeCells
+    freeCellsLocal
       .filter(_ > lastCellWithTheSameFigure)
       .filter(isAbleToPlace(figure))
-      .map(cell => ChessBoard(col, row, figures + ChessBoard.getTuple(cell, figure)))
+      .map(cell =>
+      new ChessBoard(col, row, figures + (cell -> figure)) {
+        override lazy val freeCells = freeCellsLocal.filterNot(figure.canReach(cell))
+
+        override protected def getLastCellWithTheSameFigure(fig: Figure): Option[Cell] = {
+          fig match {
+            case f if f == figure => Option(cell)
+          }
+        } orElse super.getLastCellWithTheSameFigure(figure)
+
+      }
+      )
   }
 }
 
@@ -39,10 +51,6 @@ object ChessBoard {
   def empty(col: Int, row: Int) = ChessBoard(col, row, figures = Set.empty)
 
   import scala.collection.mutable.{Map => MMap}
-
-  private val cellFigureMap: MMap[(Cell, Figure), (Cell, Figure)] = MMap.empty
-
-  def getTuple(cell: Cell, figure: Figure) = cellFigureMap.getOrElseUpdate(cell -> figure, cell -> figure)
 
   private val allBoards: MMap[(Int, Int), Seq[Cell]] = MMap.empty
 
